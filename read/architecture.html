@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>NL2RepoBench · Architecture / 架构</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --ink: #1f2330;
+      --ink-soft: #4b5168;
+      --muted: #8a90a3;
+      --line: #e3e6ee;
+      --accent: #3554d1;
+      --accent-2: #6d52d1;
+      --warn: #d18a35;
+      --ok: #2f9d6b;
+      --teal: #18a5a5;
+      --chip: #eef1f9;
+      --shadow: 0 1px 2px rgba(20,24,40,.05), 0 6px 24px rgba(20,24,40,.06);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    /* language gating */
+    [data-lang]      { display: none; }
+    html[lang="en"] [data-lang="en"] { display: revert; }
+    html[lang="zh"] [data-lang="zh"] { display: revert; }
+    /* SVG text uses tspan switches instead — controlled below */
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 56px 32px 96px;
+    }
+    header.hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 32px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 32px;
+    }
+    .hero h1 {
+      font-size: 34px;
+      font-weight: 600;
+      letter-spacing: -.01em;
+      margin: 0 0 8px;
+    }
+    .hero .sub {
+      color: var(--ink-soft);
+      max-width: 760px;
+      margin: 0;
+    }
+    .hero .meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+      white-space: nowrap;
+    }
+    .hero .stamp {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* lang switch */
+    .lang-switch {
+      display: inline-flex;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px;
+      box-shadow: var(--shadow);
+    }
+    .lang-switch button {
+      background: transparent;
+      border: 0;
+      padding: 6px 14px;
+      font: 600 12px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: .04em;
+      color: var(--muted);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .lang-switch button:hover { color: var(--ink); }
+    .lang-switch button.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(53,84,209,.35);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+    }
+    .stat .n {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -.01em;
+    }
+    .stat .l {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-top: 2px;
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 48px 0 14px;
+      letter-spacing: -.005em;
+    }
+    h2 .tag {
+      display: inline-block;
+      vertical-align: middle;
+      font: 600 11px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--chip);
+      padding: 6px 8px;
+      border-radius: 6px;
+      margin-right: 10px;
+    }
+    p.lead {
+      color: var(--ink-soft);
+      max-width: 920px;
+      margin: 0 0 18px;
+    }
+    .diagram {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+    .diagram svg { display: block; margin: 0 auto; max-width: 100%; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px 28px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--line);
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+    .legend i {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border-radius: 4px;
+      vertical-align: -3px;
+      margin-right: 8px;
+      border: 1px solid rgba(0,0,0,.06);
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
+      header.hero { flex-direction: column; align-items: flex-start; }
+      .hero .meta { align-items: flex-start; }
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+    }
+    .card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 0 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h3 .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .card p { margin: 0 0 8px; color: var(--ink-soft); }
+    .card ul { margin: 0; padding-left: 18px; color: var(--ink-soft); }
+    .card li { margin: 4px 0; }
+    code, .mono {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: .92em;
+      color: var(--ink);
+      background: var(--chip);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    table.flow {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    table.flow th, table.flow td {
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    table.flow th {
+      background: #fafbfe;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+    table.flow td:first-child {
+      width: 110px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    table.flow tr:last-child td { border-bottom: 0; }
+    footer {
+      margin-top: 64px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <div>
+      <h1 data-lang="en">NL2RepoBench Architecture</h1>
+      <h1 data-lang="zh">NL2RepoBench 架构总览</h1>
+      <p class="sub" data-lang="en">A 0-to-1 repository-generation benchmark that drives OpenHands agents in headless batch mode, then grades each generated repository inside a clean Docker image with the agent-written test files stripped out.</p>
+      <p class="sub" data-lang="zh">面向「从 0 到 1 生成可运行代码仓库」的评测基准。以 headless 批处理方式驱动 OpenHands 代理，再将生成结果放入干净的 Docker 镜像中评分 —— 代理自己写入的测试文件会被先剥离掉。</p>
+    </div>
+    <div class="meta">
+      <div class="lang-switch" role="tablist" aria-label="Language">
+        <button type="button" data-set-lang="en" class="active" aria-pressed="true">EN</button>
+        <button type="button" data-set-lang="zh" aria-pressed="false">中文</button>
+      </div>
+      <div class="stamp">v1 · single-host · python-on-whales</div>
+    </div>
+  </header>
+
+  <section class="stats">
+    <div class="stat">
+      <div class="n">104</div>
+      <div class="l" data-lang="en">Benchmark tasks</div>
+      <div class="l" data-lang="zh">评测任务数</div>
+    </div>
+    <div class="stat">
+      <div class="n">3</div>
+      <div class="l" data-lang="en">Pipeline stages</div>
+      <div class="l" data-lang="zh">流水线阶段</div>
+    </div>
+    <div class="stat">
+      <div class="n">30</div>
+      <div class="l" data-lang="en">Default parallel workers</div>
+      <div class="l" data-lang="zh">默认并发数</div>
+    </div>
+    <div class="stat">
+      <div class="n">2</div>
+      <div class="l" data-lang="en">Docker layers (sibling)</div>
+      <div class="l" data-lang="zh">兄弟级 Docker 层</div>
+    </div>
+  </section>
+
+  <h2>
+    <span class="tag" data-lang="en">Overview</span>
+    <span class="tag" data-lang="zh">总览</span>
+    <span data-lang="en">System architecture</span>
+    <span data-lang="zh">系统整体架构</span>
+  </h2>
+  <p class="lead" data-lang="en">The benchmark is a fan-out pipeline. <code>main.py</code> loads every task descriptor under <code>test_files/</code>, expands them by model into <code>AppData</code> jobs, and submits them to a <code>ThreadPoolExecutor</code>. Each worker drives one OpenHands container to generate a repo, then a second clean container to grade it. All container lifecycle goes through <code>python_on_whales</code> on the host Docker daemon.</p>
+  <p class="lead" data-lang="zh">整体是一个扇出式流水线。<code>main.py</code> 加载 <code>test_files/</code> 下所有任务，再按模型展开成 <code>AppData</code> 作业，丢给 <code>ThreadPoolExecutor</code>。每个 worker 会先启动一个 OpenHands 容器生成代码，再启动一个干净的容器进行评测。所有容器生命周期都通过 <code>python_on_whales</code> 走宿主机的 Docker 守护进程。</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 1180 760" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="NL2RepoBench architecture diagram">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#5a627a"/>
+        </marker>
+        <marker id="arrAccent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#3554d1"/>
+        </marker>
+        <marker id="arrPurple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d52d1"/>
+        </marker>
+        <marker id="arrTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#18a5a5"/>
+        </marker>
+        <marker id="arrAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#d18a35"/>
+        </marker>
+
+        <linearGradient id="gOrch" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset="1" stop-color="#f0f3fb"/>
+        </linearGradient>
+        <linearGradient id="gGen" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset="1" stop-color="#efeaff"/>
+        </linearGradient>
+        <linearGradient id="gGrade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset="1" stop-color="#e8f5f1"/>
+        </linearGradient>
+        <linearGradient id="gData" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset="1" stop-color="#fdf2e7"/>
+        </linearGradient>
+
+        <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1a223f" flood-opacity="0.08"/>
+        </filter>
+
+        <pattern id="dots" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse">
+          <circle cx="1.2" cy="1.2" r="1.0" fill="#e6e9f2"/>
+        </pattern>
+      </defs>
+
+      <rect x="0" y="0" width="1180" height="760" fill="#ffffff"/>
+      <rect x="0" y="0" width="1180" height="760" fill="url(#dots)" opacity=".55"/>
+
+      <!-- Swimlane backdrops -->
+      <g font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace" font-size="11" fill="#8a90a3" letter-spacing="0.12em">
+        <rect x="36" y="80" width="1108" height="170" rx="14" fill="#fafbfe" stroke="#e3e6ee"/>
+        <text x="56" y="103" font-weight="700">
+          <tspan class="t-en">ORCHESTRATION · main.py / config.json / ThreadPoolExecutor</tspan>
+          <tspan class="t-zh">调度层 · main.py / config.json / ThreadPoolExecutor</tspan>
+        </text>
+
+        <rect x="36" y="270" width="1108" height="200" rx="14" fill="#fafbfe" stroke="#e3e6ee"/>
+        <text x="56" y="293" font-weight="700">
+          <tspan class="t-en">PER-TASK PIPELINE · openhands/  (runs N in parallel)</tspan>
+          <tspan class="t-zh">单任务流水线 · openhands/  （并发执行 N 个）</tspan>
+        </text>
+
+        <rect x="36" y="490" width="1108" height="200" rx="14" fill="#fafbfe" stroke="#e3e6ee"/>
+        <text x="56" y="513" font-weight="700">
+          <tspan class="t-en">HOST DOCKER · docker_self/docker_service.py  ·  python_on_whales</tspan>
+          <tspan class="t-zh">宿主机 Docker · docker_self/docker_service.py  ·  python_on_whales</tspan>
+        </text>
+      </g>
+
+      <!-- ============ ORCHESTRATION LANE ============ -->
+
+      <g filter="url(#soft)">
+        <rect x="64" y="120" width="180" height="110" rx="10" fill="url(#gData)" stroke="#e3c8a3"/>
+        <text x="80" y="145" font-size="13" font-weight="700" fill="#1f2330">
+          <tspan class="t-en">test_files/ · 104 tasks</tspan>
+          <tspan class="t-zh">test_files/ · 104 个任务</tspan>
+        </text>
+        <text x="80" y="165" font-size="11" fill="#4b5168">
+          <tspan class="t-en">start.md · spec for agent</tspan>
+          <tspan class="t-zh">start.md · 给代理的需求</tspan>
+        </text>
+        <text x="80" y="181" font-size="11" fill="#4b5168">test_case_count.txt</text>
+        <text x="80" y="197" font-size="11" fill="#4b5168">
+          <tspan class="t-en">*commands*.json · pytest cmd</tspan>
+          <tspan class="t-zh">*commands*.json · pytest 命令</tspan>
+        </text>
+        <text x="80" y="213" font-size="11" fill="#4b5168">
+          <tspan class="t-en">*files*.json · strip list</tspan>
+          <tspan class="t-zh">*files*.json · 待剥离清单</tspan>
+        </text>
+      </g>
+
+      <g filter="url(#soft)">
+        <rect x="270" y="135" width="160" height="80" rx="10" fill="url(#gData)" stroke="#e3c8a3"/>
+        <text x="286" y="160" font-size="13" font-weight="700">config.json</text>
+        <text x="286" y="180" font-size="11" fill="#4b5168">
+          <tspan class="t-en">model · sk · baseUrl</tspan>
+          <tspan class="t-zh">模型 · 密钥 · 接入点</tspan>
+        </text>
+        <text x="286" y="196" font-size="11" fill="#4b5168">
+          <tspan class="t-en">proNameList · pool size</tspan>
+          <tspan class="t-zh">任务列表 · 并发数</tspan>
+        </text>
+      </g>
+
+      <g filter="url(#soft)">
+        <rect x="475" y="120" width="220" height="110" rx="10" fill="url(#gOrch)" stroke="#cdd5ee"/>
+        <text x="495" y="145" font-size="13" font-weight="700" fill="#1f2330">main.py</text>
+        <text x="495" y="165" font-size="11" fill="#4b5168">read_all_test_data()</text>
+        <text x="495" y="181" font-size="11" fill="#4b5168">start_openhands(conf)</text>
+        <text x="495" y="201" font-size="11" fill="#3554d1" font-weight="600">
+          <tspan class="t-en">fans out (model × task)</tspan>
+          <tspan class="t-zh">按 模型 × 任务 扇出</tspan>
+        </text>
+      </g>
+
+      <g filter="url(#soft)">
+        <rect x="725" y="120" width="220" height="110" rx="10" fill="url(#gOrch)" stroke="#cdd5ee"/>
+        <text x="745" y="145" font-size="13" font-weight="700">ThreadPoolExecutor</text>
+        <text x="745" y="165" font-size="11" fill="#4b5168">
+          <tspan class="t-en">max_pool_size (default 30)</tspan>
+          <tspan class="t-zh">max_pool_size（默认 30）</tspan>
+        </text>
+        <text x="745" y="181" font-size="11" fill="#4b5168">
+          <tspan class="t-en">port = 3000 + index</tspan>
+          <tspan class="t-zh">端口 = 3000 + 序号</tspan>
+        </text>
+        <text x="745" y="201" font-size="11" fill="#4b5168">
+          <tspan class="t-en">one AppData per (model,task)</tspan>
+          <tspan class="t-zh">每对 (模型,任务) 一个 AppData</tspan>
+        </text>
+      </g>
+
+      <g filter="url(#soft)">
+        <rect x="975" y="135" width="160" height="80" rx="10" fill="url(#gOrch)" stroke="#cdd5ee" stroke-dasharray="4 3"/>
+        <text x="991" y="160" font-size="13" font-weight="700">only_test.py</text>
+        <text x="991" y="180" font-size="11" fill="#4b5168">
+          <tspan class="t-en">re-grade an existing</tspan>
+          <tspan class="t-zh">对已有 workspace</tspan>
+        </text>
+        <text x="991" y="196" font-size="11" fill="#4b5168">
+          <tspan class="t-en">workspace (skip LLM)</tspan>
+          <tspan class="t-zh">重新评分（跳过 LLM）</tspan>
+        </text>
+      </g>
+
+      <g stroke="#5a627a" stroke-width="1.5" fill="none">
+        <line x1="244" y1="175" x2="270" y2="175" marker-end="url(#arr)"/>
+        <line x1="430" y1="175" x2="475" y2="175" marker-end="url(#arr)"/>
+        <line x1="695" y1="175" x2="725" y2="175" marker-end="url(#arrAccent)" stroke="#3554d1"/>
+      </g>
+
+      <path d="M 1055 215 Q 1055 410 985 470" stroke="#18a5a5" stroke-width="1.5" stroke-dasharray="5 4" fill="none" marker-end="url(#arrTeal)"/>
+      <text x="1063" y="335" font-size="10" fill="#18a5a5" font-family="ui-monospace, SF Mono, Menlo, Consolas">
+        <tspan class="t-en">post-only path</tspan>
+        <tspan class="t-zh">仅后处理路径</tspan>
+      </text>
+
+      <!-- =========== PER-TASK PIPELINE LANE =========== -->
+
+      <g filter="url(#soft)">
+        <rect x="64" y="310" width="240" height="140" rx="10" fill="url(#gOrch)" stroke="#cdd5ee"/>
+        <text x="84" y="334" font-size="13" font-weight="700">
+          <tspan class="t-en">1 · start_app(AppData)</tspan>
+          <tspan class="t-zh">1 · start_app(AppData)</tspan>
+        </text>
+        <text x="84" y="354" font-size="11" fill="#4b5168">openhands/openhands_app.py</text>
+        <text x="84" y="376" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• mkdir workspaces/&lt;id&gt;/workspace</tspan>
+          <tspan class="t-zh">• 创建 workspaces/&lt;id&gt;/workspace</tspan>
+        </text>
+        <text x="84" y="392" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• copy start.md into it</tspan>
+          <tspan class="t-zh">• 复制 start.md 进去</tspan>
+        </text>
+        <text x="84" y="408" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• render config.template.toml</tspan>
+          <tspan class="t-zh">• 渲染 config.template.toml</tspan>
+        </text>
+        <text x="84" y="424" font-size="11" fill="#1f2330">
+          <tspan class="t-en">  · {{VOLUMES}}  · {{MODULE_CONFIG}}</tspan>
+          <tspan class="t-zh">  · 替换 VOLUMES / MODULE_CONFIG</tspan>
+        </text>
+        <text x="84" y="440" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• launch OpenHands container</tspan>
+          <tspan class="t-zh">• 启动 OpenHands 容器</tspan>
+        </text>
+      </g>
+
+      <g filter="url(#soft)">
+        <rect x="335" y="310" width="240" height="140" rx="10" fill="url(#gGen)" stroke="#cab9f0"/>
+        <text x="355" y="334" font-size="13" font-weight="700" fill="#3a2b78">
+          <tspan class="t-en">2 · Generation</tspan>
+          <tspan class="t-zh">2 · 代码生成</tspan>
+        </text>
+        <text x="355" y="354" font-size="11" fill="#4b5168">openhands-app-&lt;port&gt;</text>
+        <text x="355" y="376" font-size="11" fill="#1f2330">
+          <tspan class="t-en">prompt: "implement project per</tspan>
+          <tspan class="t-zh">指令：按 start.md 实现项目</tspan>
+        </text>
+        <text x="355" y="392" font-size="11" fill="#1f2330">
+          <tspan class="t-en">start.md, runnable in /workspace"</tspan>
+          <tspan class="t-zh">  并保证在 /workspace 中可运行</tspan>
+        </text>
+        <text x="355" y="412" font-size="11" fill="#1f2330">
+          <tspan class="t-en">poll container.reload() / 5 s</tspan>
+          <tspan class="t-zh">每 5 秒轮询容器状态</tspan>
+        </text>
+        <text x="355" y="428" font-size="11" fill="#6d52d1" font-weight="600">
+          <tspan class="t-en">→ workspace populated by agent</tspan>
+          <tspan class="t-zh">→ 代理向 workspace 写入产物</tspan>
+        </text>
+      </g>
+
+      <g filter="url(#soft)">
+        <rect x="606" y="310" width="240" height="140" rx="10" fill="url(#gGrade)" stroke="#b5dccd"/>
+        <text x="626" y="334" font-size="13" font-weight="700" fill="#1e6e4d">
+          <tspan class="t-en">3 · Post-process</tspan>
+          <tspan class="t-zh">3 · 后处理</tspan>
+        </text>
+        <text x="626" y="354" font-size="11" fill="#4b5168">openhands/post_processor.py</text>
+        <text x="626" y="376" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• zip workspace snapshot</tspan>
+          <tspan class="t-zh">• 压缩 workspace 快照</tspan>
+        </text>
+        <text x="626" y="392" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• strip setup.py / req*.txt / …</tspan>
+          <tspan class="t-zh">• 清除 setup.py / req*.txt 等</tspan>
+        </text>
+        <text x="626" y="408" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• delete agent's test files</tspan>
+          <tspan class="t-zh">• 删除代理写的测试文件</tspan>
+        </text>
+        <text x="626" y="424" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• write Dockerfile · FROM gh.cr</tspan>
+          <tspan class="t-zh">• 生成 Dockerfile（FROM ghcr）</tspan>
+        </text>
+        <text x="626" y="440" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• build python-test-&lt;id&gt;</tspan>
+          <tspan class="t-zh">• 构建 python-test-&lt;id&gt; 镜像</tspan>
+        </text>
+      </g>
+
+      <g filter="url(#soft)">
+        <rect x="877" y="310" width="240" height="140" rx="10" fill="url(#gGrade)" stroke="#b5dccd"/>
+        <text x="897" y="334" font-size="13" font-weight="700" fill="#1e6e4d">
+          <tspan class="t-en">4 · Grade &amp; aggregate</tspan>
+          <tspan class="t-zh">4 · 评测与汇总</tspan>
+        </text>
+        <text x="897" y="354" font-size="11" fill="#4b5168">run_test_commands · analyze_*</text>
+        <text x="897" y="376" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• exec testShell in clean image</tspan>
+          <tspan class="t-zh">• 在干净镜像中执行 testShell</tspan>
+        </text>
+        <text x="897" y="392" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• regex pytest output</tspan>
+          <tspan class="t-zh">• 用正则解析 pytest 输出</tspan>
+        </text>
+        <text x="897" y="408" font-size="11" fill="#1f2330">
+          <tspan class="t-en">  passed / failed / errors</tspan>
+          <tspan class="t-zh">  通过 / 失败 / 错误</tspan>
+        </text>
+        <text x="897" y="424" font-size="11" fill="#1f2330">
+          <tspan class="t-en">• success = passed / total_txt</tspan>
+          <tspan class="t-zh">• 通过率 = passed / txt 总数</tspan>
+        </text>
+        <text x="897" y="440" font-size="11" fill="#2f9d6b" font-weight="600">
+          <tspan class="t-en">→ result/&lt;id&gt;.json</tspan>
+          <tspan class="t-zh">→ 写入 result/&lt;id&gt;.json</tspan>
+        </text>
+      </g>
+
+      <g stroke="#5a627a" stroke-width="1.5" fill="none">
+        <line x1="304" y1="380" x2="335" y2="380" marker-end="url(#arr)"/>
+        <line x1="575" y1="380" x2="606" y2="380" marker-end="url(#arr)"/>
+        <line x1="846" y1="380" x2="877" y2="380" marker-end="url(#arr)"/>
+      </g>
+
+      <path d="M 835 230 Q 835 270 480 310" stroke="#3554d1" stroke-width="1.5" fill="none" marker-end="url(#arrAccent)"/>
+      <text x="540" y="262" font-size="10" fill="#3554d1" font-family="ui-monospace, SF Mono, Menlo, Consolas">submit(start_app, …)</text>
+
+      <!-- ============ HOST DOCKER LANE ============ -->
+
+      <g filter="url(#soft)">
+        <rect x="64" y="540" width="260" height="130" rx="10" fill="url(#gOrch)" stroke="#cdd5ee"/>
+        <text x="84" y="565" font-size="13" font-weight="700">docker_self/docker_service.py</text>
+        <text x="84" y="583" font-size="11" fill="#4b5168">
+          <tspan class="t-en">thin python_on_whales wrapper</tspan>
+          <tspan class="t-zh">python_on_whales 的薄封装</tspan>
+        </text>
+        <text x="84" y="603" font-size="11" fill="#1f2330">create_advanced_container · build_image</text>
+        <text x="84" y="619" font-size="11" fill="#1f2330">execute_command_in_container</text>
+        <text x="84" y="635" font-size="11" fill="#1f2330">
+          <tspan class="t-en">pull/start/stop/remove · get_logs</tspan>
+          <tspan class="t-zh">拉取 / 启停 / 删除 / 取日志</tspan>
+        </text>
+        <text x="84" y="654" font-size="11" fill="#8a90a3">
+          <tspan class="t-en">local or TLS remote (DockerHostInfo)</tspan>
+          <tspan class="t-zh">本地或 TLS 远程（DockerHostInfo）</tspan>
+        </text>
+      </g>
+
+      <g filter="url(#soft)">
+        <rect x="355" y="540" width="240" height="130" rx="10" fill="url(#gGen)" stroke="#cab9f0"/>
+        <text x="375" y="565" font-size="13" font-weight="700" fill="#3a2b78">openhands-app-&lt;port&gt;</text>
+        <text x="375" y="583" font-size="11" fill="#4b5168">
+          <tspan class="t-en">image: openhands:0.56</text>
+          <tspan class="t-zh">镜像：openhands:0.56</tspan>
+        </text>
+        <text x="375" y="603" font-size="11" fill="#1f2330">
+          <tspan class="t-en">mounts /var/run/docker.sock</tspan>
+          <tspan class="t-zh">挂载 /var/run/docker.sock</tspan>
+        </text>
+        <text x="375" y="619" font-size="11" fill="#1f2330">
+          <tspan class="t-en">→ spawns runtime:0.56-nikolaik</tspan>
+          <tspan class="t-zh">→ 拉起 runtime:0.56-nikolaik</tspan>
+        </text>
+        <text x="375" y="635" font-size="11" fill="#1f2330">
+          <tspan class="t-en">as a sibling, not a child</tspan>
+          <tspan class="t-zh">作为兄弟容器，并非子容器</tspan>
+        </text>
+        <text x="375" y="654" font-size="11" fill="#6d52d1" font-weight="600">
+          <tspan class="t-en">writes /workspace</tspan>
+          <tspan class="t-zh">向 /workspace 写入产物</tspan>
+        </text>
+      </g>
+
+      <g filter="url(#soft)">
+        <rect x="626" y="540" width="240" height="130" rx="10" fill="url(#gGrade)" stroke="#b5dccd"/>
+        <text x="646" y="565" font-size="13" font-weight="700" fill="#1e6e4d">python-test-&lt;id&gt;</text>
+        <text x="646" y="583" font-size="11" fill="#4b5168">FROM ghcr.io/.../&lt;proName&gt;:1.0</text>
+        <text x="646" y="603" font-size="11" fill="#1f2330">COPY workspace /workspace</text>
+        <text x="646" y="619" font-size="11" fill="#1f2330">CMD tail -f /dev/null</text>
+        <text x="646" y="635" font-size="11" fill="#1f2330">
+          <tspan class="t-en">testShell commands run via exec</tspan>
+          <tspan class="t-zh">通过 exec 执行 testShell 命令</tspan>
+        </text>
+        <text x="646" y="654" font-size="11" fill="#2f9d6b" font-weight="600">
+          <tspan class="t-en">stdout → grader regex</tspan>
+          <tspan class="t-zh">标准输出 → 评分正则</tspan>
+        </text>
+      </g>
+
+      <g filter="url(#soft)">
+        <rect x="897" y="540" width="240" height="130" rx="10" fill="url(#gData)" stroke="#e3c8a3"/>
+        <text x="917" y="565" font-size="13" font-weight="700">
+          <tspan class="t-en">Persisted outputs</tspan>
+          <tspan class="t-zh">持久化产物</tspan>
+        </text>
+        <text x="917" y="585" font-size="11" fill="#1f2330">workspaces/&lt;id&gt;/workspace/</text>
+        <text x="917" y="601" font-size="11" fill="#1f2330">workspaces/&lt;id&gt;/config.toml</text>
+        <text x="917" y="617" font-size="11" fill="#1f2330">workspaces/&lt;id&gt;/log.log</text>
+        <text x="917" y="633" font-size="11" fill="#1f2330">
+          <tspan class="t-en">workspaces/&lt;id&gt;.zip · snapshot</tspan>
+          <tspan class="t-zh">workspaces/&lt;id&gt;.zip · 快照</tspan>
+        </text>
+        <text x="917" y="649" font-size="11" fill="#d18a35" font-weight="600">
+          <tspan class="t-en">result/&lt;id&gt;.json · scores</tspan>
+          <tspan class="t-zh">result/&lt;id&gt;.json · 评分</tspan>
+        </text>
+      </g>
+
+      <g stroke="#6d52d1" stroke-width="1.5" stroke-dasharray="5 4" fill="none">
+        <line x1="455" y1="450" x2="455" y2="540" marker-end="url(#arrPurple)"/>
+      </g>
+      <text x="465" y="498" font-size="10" fill="#6d52d1" font-family="ui-monospace, SF Mono, Menlo, Consolas">
+        <tspan class="t-en">launch · poll</tspan>
+        <tspan class="t-zh">启动 · 轮询</tspan>
+      </text>
+
+      <g stroke="#18a5a5" stroke-width="1.5" stroke-dasharray="5 4" fill="none">
+        <line x1="726" y1="450" x2="726" y2="540" marker-end="url(#arrTeal)"/>
+      </g>
+      <text x="736" y="498" font-size="10" fill="#18a5a5" font-family="ui-monospace, SF Mono, Menlo, Consolas">
+        <tspan class="t-en">build · exec</tspan>
+        <tspan class="t-zh">构建 · 执行</tspan>
+      </text>
+
+      <g stroke="#d18a35" stroke-width="1.5" stroke-dasharray="5 4" fill="none">
+        <line x1="997" y1="450" x2="997" y2="540" marker-end="url(#arrAmber)"/>
+      </g>
+      <text x="1006" y="498" font-size="10" fill="#d18a35" font-family="ui-monospace, SF Mono, Menlo, Consolas">
+        <tspan class="t-en">write results</tspan>
+        <tspan class="t-zh">写入结果</tspan>
+      </text>
+
+      <path d="M 595 605 C 615 620 615 620 626 605" stroke="#8a90a3" stroke-width="1.2" fill="none" stroke-dasharray="3 3"/>
+      <text x="430" y="705" font-size="10" fill="#8a90a3" font-family="ui-monospace, SF Mono, Menlo, Consolas">
+        <tspan class="t-en">shared host volume: workspaces/&lt;id&gt;/workspace</tspan>
+        <tspan class="t-zh">共享宿主卷：workspaces/&lt;id&gt;/workspace</tspan>
+      </text>
+
+      <g font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">
+        <text x="1140" y="746" font-size="10" fill="#8a90a3" text-anchor="end">fig · architecture.html</text>
+      </g>
+
+    </svg>
+    <div class="legend">
+      <span><i style="background:#f0f3fb;border-color:#cdd5ee"></i><span data-lang="en">Orchestration / Python</span><span data-lang="zh">调度 / Python</span></span>
+      <span><i style="background:#efeaff;border-color:#cab9f0"></i><span data-lang="en">Generation (OpenHands)</span><span data-lang="zh">代码生成（OpenHands）</span></span>
+      <span><i style="background:#e8f5f1;border-color:#b5dccd"></i><span data-lang="en">Grading / clean test image</span><span data-lang="zh">评测 / 干净测试镜像</span></span>
+      <span><i style="background:#fdf2e7;border-color:#e3c8a3"></i><span data-lang="en">Data &amp; persisted artifacts</span><span data-lang="zh">数据与持久产物</span></span>
+      <span><i style="background:transparent;border:1.5px dashed #6d52d1"></i><span data-lang="en">Cross-process (Docker)</span><span data-lang="zh">跨进程（Docker）</span></span>
+    </div>
+  </div>
+
+  <h2>
+    <span class="tag" data-lang="en">Pipeline</span>
+    <span class="tag" data-lang="zh">流水线</span>
+    <span data-lang="en">End-to-end task lifecycle</span>
+    <span data-lang="zh">单任务全生命周期</span>
+  </h2>
+  <table class="flow">
+    <thead>
+      <tr>
+        <th data-lang="en">Step</th><th data-lang="en">Where</th><th data-lang="en">What happens</th>
+        <th data-lang="zh">步骤</th><th data-lang="zh">位置</th><th data-lang="zh">动作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td data-lang="en">0 · Load</td>
+        <td data-lang="en"><code>test_data_service.read_all_test_data</code></td>
+        <td data-lang="en">Walks <code>test_files/</code>. For each subdir, picks up <code>*.txt</code> (expected count), <code>*commands*.json</code> (pytest cmds), <code>*files*.json</code> (strip list), <code>start.md</code> (spec). Stuffs them into the module-level <code>test_data_list</code>.</td>
+
+        <td data-lang="zh">0 · 加载</td>
+        <td data-lang="zh"><code>test_data_service.read_all_test_data</code></td>
+        <td data-lang="zh">遍历 <code>test_files/</code>。对每个子目录，分别识别 <code>*.txt</code>（期望用例数）、<code>*commands*.json</code>（pytest 命令）、<code>*files*.json</code>（剥离清单）、<code>start.md</code>（需求文档），统一塞入模块级 <code>test_data_list</code>。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">1 · Plan</td>
+        <td data-lang="en"><code>start_openhands</code></td>
+        <td data-lang="en">Reads <code>config.json</code>. Expands every <code>(model, proName)</code> into an <code>AppData</code>, assigning <code>port = 3000 + index</code>. Submits all to a <code>ThreadPoolExecutor</code> (default 30).</td>
+
+        <td data-lang="zh">1 · 规划</td>
+        <td data-lang="zh"><code>start_openhands</code></td>
+        <td data-lang="zh">读取 <code>config.json</code>。把每对 <code>(模型, proName)</code> 展开成一个 <code>AppData</code>，端口按 <code>3000 + 序号</code> 顺次分配，全部提交给 <code>ThreadPoolExecutor</code>（默认 30）。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">2 · Stage</td>
+        <td data-lang="en"><code>start_app</code></td>
+        <td data-lang="en">Creates <code>workspaces/&lt;proName&gt;_bo1/workspace/</code>, copies <code>start.md</code> in, renders <code>config.template.toml</code> with the model's <code>llm.&lt;sanitized&gt;</code> section.</td>
+
+        <td data-lang="zh">2 · 准备</td>
+        <td data-lang="zh"><code>start_app</code></td>
+        <td data-lang="zh">建立 <code>workspaces/&lt;proName&gt;_bo1/workspace/</code>，把 <code>start.md</code> 复制进去；渲染 <code>config.template.toml</code>，填入该模型的 <code>llm.&lt;sanitized&gt;</code> 配置段。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">3 · Generate</td>
+        <td data-lang="en"><code>openhands-app-&lt;port&gt;</code></td>
+        <td data-lang="en">OpenHands runs headless, told to implement the project from <code>start.md</code>. It mounts the host's Docker socket and spawns its own <code>runtime:0.56-nikolaik</code> sibling. The driver polls <code>container.reload()</code> every 5 s until the auto-removed container disappears.</td>
+
+        <td data-lang="zh">3 · 生成</td>
+        <td data-lang="zh"><code>openhands-app-&lt;port&gt;</code></td>
+        <td data-lang="zh">OpenHands 以 headless 方式运行，按 <code>start.md</code> 实现项目。它挂载宿主机的 Docker socket，并据此拉起一个兄弟容器 <code>runtime:0.56-nikolaik</code>。驱动每 5 秒轮询一次 <code>container.reload()</code>，直至自动回收的容器消失。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">4 · Strip</td>
+        <td data-lang="en"><code>post_processor</code></td>
+        <td data-lang="en">Zips the workspace as evidence. <strong>Then deletes</strong> all packaging files and every path listed in <code>pyTestFileList</code> — preventing the agent from "passing" by including a self-written copy of the test cases.</td>
+
+        <td data-lang="zh">4 · 剥离</td>
+        <td data-lang="zh"><code>post_processor</code></td>
+        <td data-lang="zh">先把 workspace 打成 zip 作为留证；<strong>然后删除</strong>所有打包文件以及 <code>pyTestFileList</code> 中列出的路径 —— 防止代理通过自带一份测试用例来"骗分"。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">5 · Build</td>
+        <td data-lang="en"><code>build_image</code></td>
+        <td data-lang="en">Writes a one-shot Dockerfile that <code>FROM ghcr.io/multimodal-art-projection/nl2repobench/&lt;proName&gt;:1.0</code> and <code>COPY</code>s the cleaned workspace. Tags it <code>python-test-&lt;task_uuid&gt;</code>.</td>
+
+        <td data-lang="zh">5 · 构建</td>
+        <td data-lang="zh"><code>build_image</code></td>
+        <td data-lang="zh">生成一个一次性 Dockerfile：<code>FROM ghcr.io/multimodal-art-projection/nl2repobench/&lt;proName&gt;:1.0</code>，再 <code>COPY</code> 清理后的 workspace，最终打标签为 <code>python-test-&lt;task_uuid&gt;</code>。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">6 · Grade</td>
+        <td data-lang="en"><code>run_test_commands</code></td>
+        <td data-lang="en">Boots that test image (<code>tail -f /dev/null</code>), runs each command in <code>testShell</code>, captures stdout. Regex scans for <code>N passed</code> / <code>N failed</code> / <code>N error</code>, divides <code>passed</code> by the count from the <code>.txt</code> file.</td>
+
+        <td data-lang="zh">6 · 评测</td>
+        <td data-lang="zh"><code>run_test_commands</code></td>
+        <td data-lang="zh">启动该测试镜像（<code>tail -f /dev/null</code> 常驻），依次执行 <code>testShell</code> 中的命令并捕获标准输出。用正则匹配 <code>N passed</code> / <code>N failed</code> / <code>N error</code>，最终用 <code>passed</code> 除以 <code>.txt</code> 文件里的总数。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">7 · Persist</td>
+        <td data-lang="en"><code>result/&lt;id&gt;.json</code></td>
+        <td data-lang="en">Aggregated record per task — status, score, pytest breakdown, container metadata, paths. Per-task log lands in <code>workspaces/&lt;id&gt;/log.log</code>.</td>
+
+        <td data-lang="zh">7 · 落盘</td>
+        <td data-lang="zh"><code>result/&lt;id&gt;.json</code></td>
+        <td data-lang="zh">每个任务一份汇总记录 —— 状态、分数、pytest 拆分、容器元信息、各类路径。每任务日志另落在 <code>workspaces/&lt;id&gt;/log.log</code>。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>
+    <span class="tag" data-lang="en">Design</span>
+    <span class="tag" data-lang="zh">设计</span>
+    <span data-lang="en">Why it looks like this</span>
+    <span data-lang="zh">为什么是这样设计的</span>
+  </h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>
+        <span class="dot" style="background:#3554d1"></span>
+        <span data-lang="en">Pure parallel fan-out, no work queue</span>
+        <span data-lang="zh">纯并发扇出，无消息队列</span>
+      </h3>
+      <p data-lang="en">There is no broker, no DB, no shared state beyond the file system. <code>main.py</code> populates a module-level list, then a <code>ThreadPoolExecutor</code> sprays <code>start_app</code> futures at it. Each task is fully isolated by its <code>workspaces/&lt;id&gt;/</code> directory and its host port.</p>
+      <p data-lang="zh">没有 broker、没有数据库，除了文件系统之外没有共享状态。<code>main.py</code> 填好一个模块级列表，<code>ThreadPoolExecutor</code> 把 <code>start_app</code> 一次性扇出。每个任务靠自己的 <code>workspaces/&lt;id&gt;/</code> 目录和宿主端口完全隔离。</p>
+      <ul data-lang="en">
+        <li>Concurrency cap = <code>max_pool_size</code> (default 30).</li>
+        <li>Ports allocated positionally: <code>3000 + index</code> — collides with anything else on those ports.</li>
+        <li>Failures of one task never block another, but also don't get retried.</li>
+      </ul>
+      <ul data-lang="zh">
+        <li>并发上限 = <code>max_pool_size</code>（默认 30）。</li>
+        <li>端口按序号分配：<code>3000 + index</code> —— 与同段已占用端口会冲突。</li>
+        <li>单任务失败不会阻塞其他任务，但也没有自动重试。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>
+        <span class="dot" style="background:#6d52d1"></span>
+        <span data-lang="en">Two Docker layers, sibling not child</span>
+        <span data-lang="zh">两层 Docker，兄弟非父子</span>
+      </h3>
+      <p data-lang="en">The OpenHands container is given <code>/var/run/docker.sock</code>. When it spawns its <em>runtime</em> sibling, that container is created on the host daemon — not nested. The host's <code>workspaces/&lt;id&gt;/workspace/</code> is the only shared surface between the agent's runtime and the later grading container.</p>
+      <p data-lang="zh">OpenHands 容器拿到了 <code>/var/run/docker.sock</code>，再去拉起 <em>runtime</em> 容器时，是直接在宿主的 daemon 上创建的兄弟容器，并非嵌套子容器。代理的 runtime 与后续评测容器之间，唯一共享面就是宿主上的 <code>workspaces/&lt;id&gt;/workspace/</code>。</p>
+      <ul data-lang="en">
+        <li>Two image versions are hard-coded — keep them in lockstep when upgrading.</li>
+        <li>Multi-host runs need shared FS (NFS) or pre-staged files.</li>
+        <li>The agent prompt itself is hardcoded in <code>openhands_app.py</code>.</li>
+      </ul>
+      <ul data-lang="zh">
+        <li>两个镜像版本是写死的，升级时必须同步更新。</li>
+        <li>多机执行需要共享文件系统（如 NFS），或者提前把文件预置到目标机器。</li>
+        <li>给代理的 prompt 本身硬编码在 <code>openhands_app.py</code> 中。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>
+        <span class="dot" style="background:#18a5a5"></span>
+        <span data-lang="en">Anti-cheat by deletion, not sandboxing</span>
+        <span data-lang="zh">靠删除而非沙盒来反作弊</span>
+      </h3>
+      <p data-lang="en">The grader doesn't try to detect copied test cases. Instead it deletes the entire <code>pyTestFileList</code> after generation — whatever the agent wrote into those paths is gone before the test image is built. The agent never sees the real test files at all; only <code>start.md</code> hints at the API surface.</p>
+      <p data-lang="zh">评测端并不尝试检测代理是否抄袭测试用例，而是直接在生成结束后把整份 <code>pyTestFileList</code> 删除 —— 代理写在那些路径下的任何内容，在构建测试镜像之前就消失了。代理从来看不到真正的测试文件，只能从 <code>start.md</code> 推测 API 形态。</p>
+      <ul data-lang="en">
+        <li>Also strips <code>setup.py</code>, <code>pyproject.toml</code>, <code>requirements*.txt</code>, lockfiles, etc.</li>
+        <li>The reference image must already contain the real test files and their deps.</li>
+        <li>Scoring is regex over pytest stdout — fragile to non-standard reporters.</li>
+      </ul>
+      <ul data-lang="zh">
+        <li>同时还会清除 <code>setup.py</code>、<code>pyproject.toml</code>、<code>requirements*.txt</code>、锁文件等。</li>
+        <li>参考镜像必须自带真实测试文件及其依赖。</li>
+        <li>评分依赖对 pytest 标准输出做正则 —— 对非标准 reporter 比较脆弱。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>
+        <span class="dot" style="background:#d18a35"></span>
+        <span data-lang="en">Filesystem as the result store</span>
+        <span data-lang="zh">文件系统即结果库</span>
+      </h3>
+      <p data-lang="en">There is no result DB. Every artifact is a file rooted at <code>workspaces/&lt;id&gt;/</code> and <code>result/&lt;id&gt;.json</code>. <code>only_test.py</code> exploits this — you can re-run grading on any prior workspace by re-entering the post-processor with the same id.</p>
+      <p data-lang="zh">没有结果数据库。所有产物都以文件形式放在 <code>workspaces/&lt;id&gt;/</code> 与 <code>result/&lt;id&gt;.json</code> 下。<code>only_test.py</code> 正是利用了这一点 —— 对任意旧 workspace，只要用相同的 id 重新进入后处理流程即可重新评分。</p>
+      <ul data-lang="en">
+        <li><code>workspaces/&lt;id&gt;.zip</code> is the evidence snapshot, captured <em>before</em> file stripping.</li>
+        <li>Rotating harness log in <code>logs/application.log</code> (10 MB × 5).</li>
+        <li>Re-running with the same <code>proName</code> overwrites the previous workspace.</li>
+      </ul>
+      <ul data-lang="zh">
+        <li><code>workspaces/&lt;id&gt;.zip</code> 是「剥离前」的证据快照。</li>
+        <li>主进程日志在 <code>logs/application.log</code> 滚动保留（10 MB × 5）。</li>
+        <li>用相同 <code>proName</code> 重跑会直接覆盖上一次的 workspace。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>
+    <span class="tag" data-lang="en">Modules</span>
+    <span class="tag" data-lang="zh">模块</span>
+    <span data-lang="en">Source map</span>
+    <span data-lang="zh">源码地图</span>
+  </h2>
+  <table class="flow">
+    <thead>
+      <tr>
+        <th data-lang="en">Path</th><th data-lang="en">Role</th>
+        <th data-lang="zh">路径</th><th data-lang="zh">职责</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td data-lang="en">main.py</td><td data-lang="en">Entry point. Calls <code>read_all_test_data()</code>, loads <code>config.json</code>, hands off to <code>start_openhands</code>.</td>
+        <td data-lang="zh">main.py</td><td data-lang="zh">主入口。调用 <code>read_all_test_data()</code>，加载 <code>config.json</code>，移交给 <code>start_openhands</code>。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">only_test.py</td><td data-lang="en">Side entry. Skips generation; re-runs post-process &amp; grading against an existing workspace id.</td>
+        <td data-lang="zh">only_test.py</td><td data-lang="zh">辅助入口。跳过生成阶段，对指定 workspace id 重新执行后处理与评测。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">test_data_service.py</td><td data-lang="en">Walks <code>test_files/</code>, builds <code>TestData</code> records, exposes the module-level <code>test_data_list</code>.</td>
+        <td data-lang="zh">test_data_service.py</td><td data-lang="zh">遍历 <code>test_files/</code>，构造 <code>TestData</code>，对外暴露模块级 <code>test_data_list</code>。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">openhands/openhands_app.py</td><td data-lang="en"><code>start_openhands</code> (fan-out), <code>start_app</code> (per-task driver), <code>AppData</code> (job record).</td>
+        <td data-lang="zh">openhands/openhands_app.py</td><td data-lang="zh"><code>start_openhands</code>（扇出）、<code>start_app</code>（单任务驱动）、<code>AppData</code>（作业实体）。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">openhands/post_processor.py</td><td data-lang="en">Zip · strip · Dockerfile · build · run · regex-score · result JSON.</td>
+        <td data-lang="zh">openhands/post_processor.py</td><td data-lang="zh">打包 · 剥离 · 生成 Dockerfile · 构建 · 运行 · 正则评分 · 写入结果 JSON。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">docker_self/docker_service.py</td><td data-lang="en">~20 thin wrappers over <code>python_on_whales</code>: images, containers, exec, copy, logs.</td>
+        <td data-lang="zh">docker_self/docker_service.py</td><td data-lang="zh">约 20 个对 <code>python_on_whales</code> 的薄封装：镜像、容器、exec、copy、日志等。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">docker_self/docker_config.py</td><td data-lang="en">Static list of <code>DockerHostInfo</code>s; only <code>localhost</code> is registered today.</td>
+        <td data-lang="zh">docker_self/docker_config.py</td><td data-lang="zh">一组静态的 <code>DockerHostInfo</code>，当前只注册了 <code>localhost</code>。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">template/config.template.toml</td><td data-lang="en">OpenHands config skeleton with <code>{{VOLUMES}}</code> and <code>{{MODULE_CONFIG}}</code> placeholders.</td>
+        <td data-lang="zh">template/config.template.toml</td><td data-lang="zh">OpenHands 配置骨架，包含 <code>{{VOLUMES}}</code> 与 <code>{{MODULE_CONFIG}}</code> 占位符。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">logging_config.py</td><td data-lang="en">Colored console + rotating file logger (<code>logs/application.log</code>, 10 MB × 5).</td>
+        <td data-lang="zh">logging_config.py</td><td data-lang="zh">彩色控制台 + 滚动文件日志（<code>logs/application.log</code>，10 MB × 5）。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">test_files/&lt;proName&gt;/</td><td data-lang="en">One folder per benchmark task — <code>start.md</code>, count, commands, strip list.</td>
+        <td data-lang="zh">test_files/&lt;proName&gt;/</td><td data-lang="zh">每个评测任务一个目录 —— <code>start.md</code>、用例数、命令、剥离清单。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">workspaces/&lt;id&gt;/</td><td data-lang="en">Generated at runtime — per-task working dir, rendered config, zipped snapshot, dual log.</td>
+        <td data-lang="zh">workspaces/&lt;id&gt;/</td><td data-lang="zh">运行时生成 —— 单任务工作目录、渲染后的配置、压缩快照、双写日志。</td>
+      </tr>
+      <tr>
+        <td data-lang="en">result/&lt;id&gt;.json</td><td data-lang="en">Final per-task score record (created on success).</td>
+        <td data-lang="zh">result/&lt;id&gt;.json</td><td data-lang="zh">每任务最终评分记录（成功后写入）。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <footer>
+    <span data-lang="en">Architecture summary of NL2RepoBench · derived from source · single-host, OpenHands 0.56 era.</span>
+    <span data-lang="zh">NL2RepoBench 架构总览 · 源自代码本身 · 单机部署，OpenHands 0.56 时代。</span>
+  </footer>
+
+</div>
+
+<style>
+  /* SVG text language switching — driven by html[lang] */
+  html[lang="en"] svg .t-zh { display: none; }
+  html[lang="zh"] svg .t-en { display: none; }
+</style>
+
+<script>
+  (function () {
+    var KEY = 'nl2repo-arch-lang';
+    var supported = ['en', 'zh'];
+    var initial = localStorage.getItem(KEY);
+    if (!initial) {
+      var nav = (navigator.language || 'en').toLowerCase();
+      initial = nav.indexOf('zh') === 0 ? 'zh' : 'en';
+    }
+    if (supported.indexOf(initial) === -1) initial = 'en';
+    apply(initial);
+
+    document.querySelectorAll('[data-set-lang]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var l = btn.getAttribute('data-set-lang');
+        if (supported.indexOf(l) === -1) return;
+        localStorage.setItem(KEY, l);
+        apply(l);
+      });
+    });
+
+    function apply(lang) {
+      document.documentElement.setAttribute('lang', lang);
+      document.title = lang === 'zh'
+        ? 'NL2RepoBench · 架构'
+        : 'NL2RepoBench · Architecture';
+      document.querySelectorAll('[data-set-lang]').forEach(function (btn) {
+        var on = btn.getAttribute('data-set-lang') === lang;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+  })();
+</script>
+
+</body>
+</html>
