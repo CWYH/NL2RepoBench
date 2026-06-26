@@ -8,25 +8,52 @@ NL2RepoBench is a benchmark that evaluates LLMs/coding agents on **0-to-1 long-h
 
 ## Common Commands
 
-Install dependencies (see `requirements.txt` — `socketio`, `python_on_whales`, `openhands`, `pydantic`):
+This project uses [uv](https://docs.astral.sh/uv/) for dependency management. The project is pinned to Python 3.12 (`.python-version`); dependencies are declared in `pyproject.toml` and locked in `uv.lock`. (`requirements.txt` is kept for reference but is no longer the source of truth.)
+
+Install dependencies (creates `.venv/` and installs from `uv.lock`):
 
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 Run the full benchmark (reads `config.json`, loads `test_files/*`, fans out to OpenHands containers):
 
 ```bash
-python main.py
+uv run python main.py
 ```
 
 Re-run just the post-processing/grading for a single existing workspace (no LLM call — edit `task_id` and `pro_name` at the bottom of the file first):
 
 ```bash
-python only_test.py
+uv run python only_test.py
 ```
 
-There is no lint configuration and no automated test target for the harness itself. `tests/test_docker.py` is an ad-hoc Docker connectivity check, not a pytest suite.
+There is no automated test target for the harness itself. `tests/test_docker.py` is an ad-hoc Docker connectivity check, not a pytest suite.
+
+## Linting
+
+Linting and formatting are handled by [Ruff](https://docs.astral.sh/ruff/) (configured under `[tool.ruff]` in `pyproject.toml`: line length 100, rules `E`/`F`/`I`). It is installed as a dev dependency via `uv sync`.
+
+Check for lint issues:
+
+```bash
+uv run ruff check .
+```
+
+Auto-fix the fixable subset (unused imports, import sorting, etc.):
+
+```bash
+uv run ruff check . --fix
+```
+
+Check / apply formatting:
+
+```bash
+uv run ruff format --check .   # report only
+uv run ruff format .           # rewrite in place
+```
+
+Note: the existing harness code predates Ruff and currently reports a number of `E501` (line-too-long) and `F403`/`F405` (star-import) findings. These are pre-existing and not auto-fixed; clean them up incrementally rather than in one sweep.
 
 ## Prerequisites
 
