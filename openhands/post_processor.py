@@ -1,27 +1,20 @@
 import os
-import json
-import zipfile
-import shutil
-import subprocess
-import logging
 import re
+import shutil
+import zipfile
 from datetime import datetime
-from typing import List, Dict, Any
-from test_data_service import TestData
+from typing import Any, Dict, List
+
 from docker_self.docker_service import (
     DockerHostInfo,
-    create_docker_client,
-    list_images,
-    pull_image,
     build_image,
-    run_container,
     create_advanced_container,
-    start_container,
-    stop_container,
-    remove_container,
+    create_docker_client,
     execute_command_in_container,
-    get_container_logs
+    remove_container,
+    stop_container,
 )
+from test_data_service import TestData
 
 
 def log_to_both(original_logger, log_file_path: str, level: str, message: str):

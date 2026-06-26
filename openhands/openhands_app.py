@@ -1,14 +1,14 @@
 import concurrent.futures
 import json
-import time
-import uuid
 import shutil
-from docker_self.docker_service import *
+import time
 
+from docker_self.docker_config import get_local_host_info
+from docker_self.docker_service import *
 from logging_config import get_logger
 from test_data_service import test_data_list
+
 from .post_processor import post_process_task
-from docker_self.docker_config import get_local_host_info
 
 logger = get_logger(__name__)
 
@@ -348,7 +348,7 @@ def start_openhands(config: dict):
                 logger.info(f"Score: {test_score}")
 
                 if status == 'completed':
-                    logger.info(f"Task completed successfully")
+                    logger.info("Task completed successfully")
 
                     # 详细打印成功信息
                     workspace_path = result.get('workspace_path', 'N/A')
@@ -391,7 +391,7 @@ def start_openhands(config: dict):
                                 logger.info(f"  Command {i + 1}: {cmd} Exit code: {exit_code})")
 
                 elif status == 'failed':
-                    logger.warning(f"Task Failed！")
+                    logger.warning("Task Failed！")
 
                     # 详细打印失败信息
                     post_process_result = result.get('post_process_result', {})
@@ -401,7 +401,7 @@ def start_openhands(config: dict):
 
                 elif status == 'error':
                     error_msg = result.get('error', 'unknown error')
-                    logger.error(f"Error occurs！")
+                    logger.error("Error occurs！")
                     logger.error(f"Error Message: {error_msg}")
                 else:
                     logger.info(f"Task Completed: {status}")

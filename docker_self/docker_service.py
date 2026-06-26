@@ -1,8 +1,8 @@
-from python_on_whales import DockerClient, Image, Container
 import os
 import tempfile
-from typing import List, Dict, Optional, Any, Tuple, Union
-from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+from python_on_whales import Container, DockerClient, Image
 
 from logging_config import get_logger
 

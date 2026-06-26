@@ -1,6 +1,7 @@
 
-from .docker_service import DockerHostInfo
 from logging_config import get_logger
+
+from .docker_service import DockerHostInfo
 
 logger = get_logger(__name__)
 

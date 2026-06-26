@@ -1,7 +1,7 @@
-from logging_config import get_logger
 from dataclasses import dataclass
 
 from docker_self.docker_service import *
+from logging_config import get_logger
 
 logger = get_logger(__name__)
 
