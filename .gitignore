@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# uv
+# (pyproject.toml and uv.lock are tracked; the venv is not)
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Benchmark run artifacts
+workspaces/*_bo1/
+workspaces/*.zip
+result/*.json
+logs/*.log
